@@ -86,8 +86,9 @@ export function ProgressStrip({
       });
       continue;
     }
-    // The update and the reading resume together: Update from Drive does both.
-    if (kind === "drive" && jobs.read && jobs.read.status !== "done") continue;
+    // Updating and reading carry on by themselves on the server every minute, so
+    // a run that stopped here never needs a Continue press — only filing does.
+    if (kind !== "filing") continue;
     lines.push({
       key: `job-${kind}`,
       text: `${describe(kind, job)} — ${job.status === "paused" ? "paused" : "stopped before finishing"}`,

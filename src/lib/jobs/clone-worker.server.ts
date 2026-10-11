@@ -145,6 +145,11 @@ export async function runCloneTick(
       folders = tree.folders.length;
       files = tree.files.length;
       scanned = tree.files.length;
+      // Drive answered, so a pause caused by a Drive connection problem is over:
+      // carry on by itself instead of waiting for someone to open the app.
+      if (pauseReason && pauseReason !== "Paused by you" && /google drive|connector|project_not_authorized|credential/i.test(pauseReason)) {
+        pauseReason = null;
+      }
 
       // Bin temporary "GC conversion" copies left behind by an interrupted print.
       const stale = Date.now() - 30 * 60_000;
