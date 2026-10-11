@@ -38,6 +38,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { shortSummaryOf } from "./DocumentPreview";
 import { useSharedPref } from "@/lib/evidence/shared-state";
 import { useEvidence } from "@/lib/evidence/store";
 import { queueClone } from "@/lib/jobs/background.functions";
@@ -599,6 +600,7 @@ export function FileBoardView() {
               key={file.id}
               file={file}
               exhibit={item?.exhibitId ?? exhibitFor(file.id)}
+              summary={item ? shortSummaryOf(item) : ""}
               copyLink={
                 item?.cloneFileId
                   ? (item.cloneUrl ?? `https://drive.google.com/file/d/${item.cloneFileId}/view`)
@@ -822,6 +824,7 @@ function FolderCard({
 function FileCard({
   file,
   exhibit,
+  summary,
   copyLink,
   busy,
   onDetails,
@@ -831,6 +834,7 @@ function FileCard({
 }: {
   file: DriveFileNode;
   exhibit: string;
+  summary: string;
   copyLink: string | undefined;
   busy: boolean;
   onDetails: (() => void) | undefined;
@@ -856,6 +860,11 @@ function FileCard({
         <span className="mt-1 block font-mono text-[10px] text-muted-foreground">
           {exhibit} · {(file.size / 1024 / 1024).toFixed(1)} MB
         </span>
+        {summary && (
+          <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+            {summary}
+          </p>
+        )}
       </div>
         <div className="flex items-center gap-1.5">
           {copyLink ? (
