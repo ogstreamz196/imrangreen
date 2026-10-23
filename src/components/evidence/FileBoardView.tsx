@@ -205,7 +205,10 @@ export function FileBoardView() {
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
-    const timer = window.setInterval(() => void sync("auto"), 20_000);
+    // No point reading Drive while the app is in the background; focus catches up.
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void sync("auto");
+    }, 20_000);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);

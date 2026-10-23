@@ -8,7 +8,6 @@ import {
   type DiaryImport,
   type HardshipEvent,
 } from "./types";
-import { todayLocal } from "./format";
 
 export type GapKind =
   | "event-no-evidence"
@@ -25,7 +24,6 @@ export type GapKind =
   | "evidence-awaiting-confirmation"
   | "evidence-unreviewed"
   | "evidence-ai-conflict"
-  | "task-overdue"
   | "aciah-impact"
   | "diary-appendix-missing";
 
@@ -41,7 +39,9 @@ export interface CaseGap {
   taskTitle: string;
 }
 
-const MEDICAL_WORDS = /(medic|doctor|gp |hospital|diagnos|therap|mental|pregnan|midwife|clinic)/i;
+// Whole words only, so "detrimental" or "environmental" never count as medical.
+const MEDICAL_WORDS =
+  /\b(medic\w*|doctors?|gp|hospitals?|diagnos\w*|therap\w*|mental\s+(?:health|illness|breakdown|state|wellbeing|well-being)|mentally|pregnan\w*|midwi\w*|clinics?|clinical)\b/i;
 const INDEPENDENT_SOURCES = [
   "Medical",
   "Government / Official",
@@ -69,9 +69,9 @@ export function aciahImpactState(record: {
   const text = `${record.description ?? ""} ${record.notes ?? ""}`;
   const mentionsAciah = (record.people ?? []).includes("Aciah") || /aciah/i.test(text);
   const explained = Boolean((record.effectOnAciah ?? record.affectsAciah ?? "").trim());
-  if (mentionsAciah && (explained || /aciah/i.test(text))) {
-    return explained ? "Explicit in evidence" : "Linked / explained";
-  }
+  // A record that names Aciah as one of the people it is about is already
+  // linked to her, so it is never flagged as unexplained.
+  if (mentionsAciah) return explained ? "Explicit in evidence" : "Linked / explained";
   if (explained) return "Linked / explained";
   return "Needs explanation";
 }
@@ -84,7 +84,6 @@ export function detectGaps(
   categories: Category[],
 ): CaseGap[] {
   const gaps: CaseGap[] = [];
-  const today = todayLocal();
   const openTaskTitles = tasks
     .filter((t) => taskStatus(t) !== "Complete")
     .map((t) => t.title.toLowerCase());
@@ -100,13 +99,18 @@ export function detectGaps(
       aiExtraction: rawItem.aiExtraction
         ? { ...rawItem.aiExtraction, uncertain: uncertainLeft }
         : rawItem.aiExtraction,
-      people: confirmed.includes("people" as never) && !(rawItem.people ?? []).length
-        ? ["Confirmed"]
-        : confirmed.includes("people" as never)
-          ? (rawItem.people ?? []).map((p) => (p === "Third party" ? "Third party (confirmed)" : p))
-          : rawItem.people,
+      people:
+        confirmed.includes("people" as never) && !(rawItem.people ?? []).length
+          ? ["Confirmed"]
+          : confirmed.includes("people" as never)
+            ? (rawItem.people ?? []).map((p) =>
+                p === "Third party" ? "Third party (confirmed)" : p,
+              )
+            : rawItem.people,
       status:
-        rawItem.status === "Needs confirmation" && confirmed.length > 0 ? ("Reviewed" as const) : rawItem.status,
+        rawItem.status === "Needs confirmation" && confirmed.length > 0
+          ? ("Reviewed" as const)
+          : rawItem.status,
     };
     const categoriesConfirmed = confirmed.includes("categories" as never);
     const base = { recordType: "evidence" as const, recordId: item.id };
@@ -122,7 +126,10 @@ export function detectGaps(
         taskTitle: `Add a date to ${item.exhibitId}`,
       });
     }
-    if (!(item.people ?? []).length || (item.people ?? []).every((person) => person === "Third party")) {
+    if (
+      !(item.people ?? []).length ||
+      (item.people ?? []).every((person) => person === "Third party")
+    ) {
       gaps.push({
         ...base,
         id: `${item.id}-person`,
@@ -156,7 +163,10 @@ export function detectGaps(
         taskTitle: `Check whether ${item.exhibitId} duplicates another exhibit`,
       });
     }
-    if (item.needsTranslation || item.status === "Translation needed") {
+    if (
+      (item.needsTranslation || item.status === "Translation needed") &&
+      !item.translationFileUrl
+    ) {
       gaps.push({
         ...base,
         id: `${item.id}-trans`,
@@ -190,7 +200,15 @@ export function detectGaps(
       });
     }
     const hasSpecificDetailGap = gaps.some(
-      (gap) => gap.recordId === item.id && ["evidence-no-date", "evidence-no-person", "evidence-no-category", "evidence-awaiting-confirmation", "evidence-ai-conflict"].includes(gap.kind),
+      (gap) =>
+        gap.recordId === item.id &&
+        [
+          "evidence-no-date",
+          "evidence-no-person",
+          "evidence-no-category",
+          "evidence-awaiting-confirmation",
+          "evidence-ai-conflict",
+        ].includes(gap.kind),
     );
     if (item.status === "Needs confirmation" && !hasSpecificDetailGap) {
       gaps.push({
@@ -321,23 +339,17 @@ export function detectGaps(
     }
   }
 
-  for (const task of tasks) {
-    if (taskStatus(task) === "Complete") continue;
-    if (task.dueDate && task.dueDate < today) {
-      gaps.push({
-        recordType: "task",
-        recordId: task.id,
-        id: `${task.id}-overdue`,
-        kind: "task-overdue",
-        severity: "medium",
-        label: "Task is past its due date",
-        detail: task.title,
-        taskTitle: task.title,
-      });
-    }
-  }
-
   return gaps.filter((g) => !openTaskTitles.includes(g.taskTitle.toLowerCase()));
+}
+
+/** Where a gap is shown: one row per record, except diary references, which each get their own. */
+export function gapRowKey(gap: CaseGap) {
+  return gap.kind === "diary-appendix-missing" ? gap.id : `${gap.recordType}:${gap.recordId}`;
+}
+
+/** How many separate things need a look — the same number on Home and on Review. */
+export function countGapRows(gaps: CaseGap[]) {
+  return new Set(gaps.map(gapRowKey)).size;
 }
 
 export type CoverageLabel = "Good evidence coverage" | "Developing" | "Needs supporting evidence";

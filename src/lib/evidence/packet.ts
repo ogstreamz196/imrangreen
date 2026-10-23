@@ -2,7 +2,6 @@ import { formatDate, formatDateTime } from "./format";
 import type { CaseGap } from "./review";
 import {
   CASE_SETTINGS,
-  READY_STATUSES,
   taskStatus,
   type CaseTask,
   type EvidenceItem,

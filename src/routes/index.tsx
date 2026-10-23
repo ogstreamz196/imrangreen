@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Plus, Settings, ShieldCheck } from "lucide-react";
+import { Settings, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { NAVIGATE_HOME_EVENT } from "@/components/ui/overlay-navigation";
@@ -189,7 +189,7 @@ function CaseApp() {
         <nav className="mt-5 flex w-full flex-col gap-1 px-3" aria-label="Primary navigation">
           {mainTabs.map((item) => {
             const Icon = item.icon;
-            const active = tab === item.id || (item.id === "packet" && packetOpen);
+            const active = item.id === "packet" ? packetOpen : !packetOpen && tab === item.id;
             return (
               <Button
                 key={item.id}
@@ -328,7 +328,12 @@ function CaseApp() {
         onImportDiary={() => setDiaryOpen(true)}
       />
       <TaskDialog open={taskOpen} onOpenChange={setTaskOpen} />
-      <BottomNav tab={tab} onTab={openNavItem} onAdd={() => setAddOpen(true)} />
+      <BottomNav
+        tab={tab}
+        packetOpen={packetOpen}
+        onTab={openNavItem}
+        onAdd={() => setAddOpen(true)}
+      />
     </div>
   );
 }
