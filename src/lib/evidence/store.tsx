@@ -443,7 +443,9 @@ export function EvidenceStoreProvider({ children }: { children: ReactNode }) {
     // anything not yet saved straight away instead of waiting for the next timer.
     const sendNow = () => void documentProvider.flush();
     const onVisibility = () => (document.visibilityState === "hidden" ? sendNow() : void refresh());
-    const timer = setInterval(() => void refresh(), 30_000);
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 30_000);
     window.addEventListener("focus", refresh);
     window.addEventListener("pagehide", sendNow);
     document.addEventListener("visibilitychange", onVisibility);

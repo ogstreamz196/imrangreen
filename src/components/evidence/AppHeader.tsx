@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Bell, ChevronLeft, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,16 @@ export function AppHeader({
   onBack: () => void;
 }) {
   const { tasks } = useEvidence();
-  const reminders = tasks.filter((t) => taskStatus(t) !== "Complete" && t.reminderAt);
+  // Only reminders that have come due count, so a reminder set for next week
+  // does not show as something to deal with today.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const reminders = tasks.filter(
+    (t) => taskStatus(t) !== "Complete" && t.reminderAt && Date.parse(t.reminderAt) <= now,
+  );
   const page = pageTitles[tab];
   const iconButton =
     "size-11 text-navy-foreground/70 hover:bg-sidebar-accent/15 hover:text-navy-foreground sm:size-9";
@@ -61,7 +71,7 @@ export function AppHeader({
             size="icon"
             className={`relative ${iconButton}`}
             onClick={onOpenTasks}
-            aria-label={`${reminders.length} reminders`}
+            aria-label={reminders.length ? `${reminders.length} reminders due` : "Reminders"}
             title="Reminders"
           >
             <Bell className="size-5" />
@@ -74,7 +84,7 @@ export function AppHeader({
           <Button
             variant="ghost"
             size="icon"
-            className={iconButton}
+            className={`${iconButton} lg:hidden`}
             onClick={onSettings}
             aria-label="Settings and tools"
             title="Settings"

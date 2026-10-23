@@ -1,6 +1,6 @@
 import { statusLabel } from "@/components/evidence/status-ui";
 import { useEffect, useRef, useState } from "react";
-import { EyeOff, Loader2, Sparkles } from "lucide-react";
+import { EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,6 @@ interface Draft {
   notes: string;
 }
 
-
 /**
  * Step-by-step repair flow for the documents flagged in the packet audit.
  * Every move (Next, Back, Close) writes the current changes first, so nothing is lost.
@@ -50,8 +49,7 @@ export function FixWizard({
   itemIds: string[];
   startId?: string | undefined;
 }) {
-  const { items, gaps, categories, updateItem, ignoreGap, runExtraction, extractingIds } =
-    useEvidence();
+  const { items, gaps, categories, updateItem, ignoreGap, extractingIds } = useEvidence();
 
   /**
    * The list is frozen when the wizard opens. Fixing a document removes it from the
@@ -73,7 +71,6 @@ export function FixWizard({
     // Deliberately keyed on `open` only: the queue must not change mid-session.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-
 
   useEffect(() => {
     if (!item) {
@@ -116,9 +113,7 @@ export function FixWizard({
             category: draft.category as (typeof item)["category"],
             categories: [
               draft.category,
-              ...(item.categories ?? []).filter(
-                (c) => c !== draft.category && c !== item.category,
-              ),
+              ...(item.categories ?? []).filter((c) => c !== draft.category && c !== item.category),
             ] as (typeof item)["categories"],
           }
         : {};
@@ -138,7 +133,6 @@ export function FixWizard({
     toast.success("Changes saved", { description: item.exhibitId });
   }
 
-
   function go(next: number) {
     saveCurrent();
     if (next < 0 || next >= queue.length) {
@@ -148,27 +142,7 @@ export function FixWizard({
     setIndex(next);
   }
 
-  /** Save what the user typed, re-read the file, then show the AI's values in the form. */
-  async function readWithAi() {
-    if (!item) return;
-    const id = item.id;
-    saveCurrent();
-    await runExtraction(id);
-    const fresh = itemsRef.current.find((i) => i.id === id);
-    if (!fresh) return;
-    setDraft({
-      title: fresh.title ?? "",
-      dateOfDocument: fresh.dateOfDocument ?? "",
-      sourceType: fresh.sourceType,
-      category: fresh.category ?? "",
-      people: (fresh.people ?? []).join(", "),
-      affectsAciah: fresh.affectsAciah ?? "",
-      notes: fresh.notes ?? "",
-    });
-  }
-
   const busy = item ? extractingIds.includes(item.id) : false;
-
 
   return (
     <Dialog
@@ -184,8 +158,8 @@ export function FixWizard({
             Fix details {queue.length ? `(${index + 1} of ${queue.length})` : ""}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Make your changes and press Next for the following document. You can close at any point —
-            what you have typed is saved first.
+            Make your changes and press Next for the following document. You can close at any point
+            — what you have typed is saved first.
           </DialogDescription>
         </DialogHeader>
 
@@ -208,7 +182,10 @@ export function FixWizard({
                   </p>
                   <ul className="mt-2 space-y-2">
                     {itemGaps.map((gap) => (
-                      <li key={gap.id} className="rounded-md border border-destructive/40 bg-card p-2">
+                      <li
+                        key={gap.id}
+                        className="rounded-md border border-destructive/40 bg-card p-2"
+                      >
                         <p className="text-[11px] font-semibold text-destructive">{gap.label}</p>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">{gap.detail}</p>
                         <Button
@@ -235,7 +212,9 @@ export function FixWizard({
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="fw-title" className="text-[11px]">Title</Label>
+                <Label htmlFor="fw-title" className="text-[11px]">
+                  Title
+                </Label>
                 <Input
                   id="fw-title"
                   value={draft.title}
@@ -246,7 +225,9 @@ export function FixWizard({
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="fw-date" className="text-[11px]">Document date</Label>
+                  <Label htmlFor="fw-date" className="text-[11px]">
+                    Document date
+                  </Label>
                   <Input
                     id="fw-date"
                     type="date"
@@ -256,7 +237,9 @@ export function FixWizard({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="fw-source" className="text-[11px]">Source type</Label>
+                  <Label htmlFor="fw-source" className="text-[11px]">
+                    Source type
+                  </Label>
                   <Select
                     value={draft.sourceType}
                     onValueChange={(v) => setDraft({ ...draft, sourceType: v as SourceType })}
@@ -276,7 +259,9 @@ export function FixWizard({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="fw-category" className="text-[11px]">Hardship category</Label>
+                <Label htmlFor="fw-category" className="text-[11px]">
+                  Hardship category
+                </Label>
                 <Select
                   value={draft.category}
                   onValueChange={(v) => setDraft({ ...draft, category: v })}
@@ -295,7 +280,9 @@ export function FixWizard({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="fw-people" className="text-[11px]">People (separated by commas)</Label>
+                <Label htmlFor="fw-people" className="text-[11px]">
+                  People (separated by commas)
+                </Label>
                 <Input
                   id="fw-people"
                   value={draft.people}
@@ -305,7 +292,9 @@ export function FixWizard({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="fw-aciah" className="text-[11px]">How this affects Aciah</Label>
+                <Label htmlFor="fw-aciah" className="text-[11px]">
+                  How this affects Aciah
+                </Label>
                 <Textarea
                   id="fw-aciah"
                   value={draft.affectsAciah}
@@ -316,7 +305,9 @@ export function FixWizard({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="fw-notes" className="text-[11px]">Case notes</Label>
+                <Label htmlFor="fw-notes" className="text-[11px]">
+                  Case notes
+                </Label>
                 <Textarea
                   id="fw-notes"
                   value={draft.notes}
@@ -325,7 +316,6 @@ export function FixWizard({
                   className="text-xs"
                 />
               </div>
-
             </>
           )}
         </div>

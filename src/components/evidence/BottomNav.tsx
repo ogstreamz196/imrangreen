@@ -19,13 +19,17 @@ const tabs: { id: NavItemId; label: string; short?: string; icon: typeof Home }[
 
 export function BottomNav({
   tab,
+  packetOpen = false,
   onTab,
   onAdd,
 }: {
   tab: MainTab;
+  /** The packet builder is a sheet, not a page, so it is lit while open. */
+  packetOpen?: boolean;
   onTab: (t: NavItemId) => void;
   onAdd: () => void;
 }) {
+  const isActive = (id: NavItemId) => (id === "packet" ? packetOpen : !packetOpen && tab === id);
   const left = tabs.slice(0, 3);
   const right = tabs.slice(3);
 
@@ -37,7 +41,7 @@ export function BottomNav({
       <div className="mx-auto grid max-w-md grid-cols-[minmax(0,1fr)_4rem_minmax(0,1fr)] items-end gap-1 px-2 pt-2">
         <div className="grid min-w-0 grid-cols-3 items-end">
           {left.map((t) => (
-            <TabButton key={t.id} t={t} active={tab === t.id} onClick={() => onTab(t.id)} />
+            <TabButton key={t.id} t={t} active={isActive(t.id)} onClick={() => onTab(t.id)} />
           ))}
         </div>
         <div className="flex h-[60px] shrink-0 justify-center">
@@ -52,7 +56,7 @@ export function BottomNav({
         </div>
         <div className="grid min-w-0 grid-cols-3 items-end">
           {right.map((t) => (
-            <TabButton key={t.id} t={t} active={tab === t.id} onClick={() => onTab(t.id)} />
+            <TabButton key={t.id} t={t} active={isActive(t.id)} onClick={() => onTab(t.id)} />
           ))}
         </div>
       </div>

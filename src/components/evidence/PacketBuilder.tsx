@@ -51,7 +51,6 @@ import {
   buildFilingFrontMatter,
   buildFilingPart,
   type FilingExhibitInput,
-  type FilingPartResult,
 } from "@/lib/filing-pdf.functions";
 import { buildWaiverAnalysis, type WaiverAnalysis } from "@/lib/waiver-analysis.functions";
 import { waiverAnalysisHtml } from "@/lib/evidence/waiver-analysis-html";
@@ -92,11 +91,9 @@ export function PacketBuilder({
     togglePacketExclusion,
     savePacketVersion,
     updatePacketVersion,
-    resetFilingNumbers,
     connection,
     driveTree,
     runExtraction,
-    extractingIds,
     reportJob,
   } = useEvidence();
   // Amounts found in documents count only once confirmed.
