@@ -69,6 +69,8 @@ export function HomeView({
   const busy = driveSyncing || scanProgress.running;
   // One figure for "to check", the same one the Review page counts.
   const toCheck = countGapRows(gaps);
+  // Red, and a suggested next step, only when something important is missing.
+  const urgent = gaps.some((gap) => gap.severity === "high");
   const latestPacket = packets.at(-1);
   const filingLink = latestPacket?.filingFiles?.[0]?.webViewLink;
   const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -120,7 +122,7 @@ export function HomeView({
             icon: <RefreshCw />,
             run: () => void onSyncDrive(),
           }
-        : gaps.some((gap) => gap.severity === "high")
+        : urgent
           ? {
               label: `Check ${plural(toCheck, "item")}`,
               why: "Some documents or entries are missing something important. Review lists them, most important first.",
@@ -209,7 +211,7 @@ export function HomeView({
         <Counter
           label="To check"
           value={toCheck}
-          attention={toCheck > 0}
+          attention={urgent}
           onClick={() => onNavigate("review")}
         />
         <Counter
